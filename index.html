@@ -1,0 +1,732 @@
+<!DOCTYPE HTML>
+<!--
+	Overflow 1.1 by HTML5 UP
+	html5up.net | @n33co
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<link rel="stylesheet" href="css/bootstrap.min.css">
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+	html { height: 100%; margin:0; padding:0; }
+		body { height: 100%; margin:0; padding:0; font-family: "Myriad Pro", Myriad, MyriadPro-Regular, 'Myriad Pro Regular', MyriadPro, 'Myriad Pro', "Liberation Sans", "Nimbus Sans L", "Helvetica Neue", vegur, Vegur, Helvetica, Arial, sans-serif; }
+		#bck { fill: #f5f5f5; }
+		.rg { fill: #004494; }
+		.rg:hover { fill: darkred; }
+		.bn { fill: none; stroke-linecap:round; stroke-linejoin:round }
+		.bn_0 { stroke: #fff; stroke-width: 1.5px; }
+		.bn_1 { stroke: #ddd; stroke-width: 1px; }
+		.bn_2 { stroke: #ddd; stroke-width: 1px; }
+		.bn_3 { stroke: #888; stroke-width: 0.5px; }
+		.bn_oth { stroke: #444; stroke-width: 1px; }
+		.cntrg { fill: lightgray; }
+		.cntrg:hover { fill: darkgray; }
+		.cntbn { fill: none; stroke: white; stroke-width: 1px; stroke-linecap:round; stroke-linejoin:round }
+
+.ticks {
+  font: 10px sans-serif;
+}
+
+.track,
+.track-inset,
+.track-overlay {
+  stroke-linecap: round;
+}
+
+.track {
+  stroke: #000;
+  stroke-opacity: 0.3;
+  stroke-width: 10px;
+}
+
+.track-inset {
+  stroke: #ddd;
+  stroke-width: 8px;
+}
+
+.track-overlay {
+  pointer-events: stroke;
+  stroke-width: 50px;
+  cursor: crosshair;
+}
+
+.handle {
+  fill: "black";
+  stroke: #000;
+  stroke-opacity: 0.5;
+  stroke-width: 1.25px;
+}
+
+.tooltip {
+  position: absolute;
+  display: none;
+  min-width: 80px;
+  height: auto;
+  background: none repeat scroll 0 0 #ffffff;
+  border: 1px solid #6F257F;
+  padding: 14px;
+  text-align: center;
+}
+
+</style>
+<<<<<<< HEAD
+<svg width="800" height="600" style="White"></svg>
+<line width="500" height="500" style="White"></line>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+	<script src="https://d3js.org/d3.v4.min.js"></script>
+	<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+	<script src="https://d3js.org/topojson.v1.min.js"></script>
+	<script src="https://rawgit.com/jgaffuri/EurostatVisu/gh-pages/js/lib.js"></script>
+ <script src="https://d3js.org/d3.v4.min.js"></script>
+
+<body>
+<div style="float:left;height:600px;width:500px;">
+  <h2>Overviwe</h2>
+	<h4>The European Union Emissions Trading System (EU ETS), also known as the European Union Emissions Trading Scheme, was the first large greenhouse gas emissions trading scheme in the world, and remains the biggest. It was launched in 2005 to fight Global warming and is a major pillar of EU climate policy. As of 2013, the EU ETS covers more than 11,000 factories, power stations, and other installations with a net heat excess of 20 MW in 31 countries—all 28 EU member states plus Iceland, Norway, and Liechtenstein. The installations regulated by the EU ETS are collectively responsible in 2008 for close to half of the EU's anthropogenic emissions of CO2 and 40% of its total greenhouse gas emissions.</h4>
+	<h4>The EU emissions trading system (EU ETS) is a cornerstone of the EU's policy to combat climate change and its key tool for reducing greenhouse gas emissions cost-effectively. It is the world's first major carbon market and remains the biggest one.</h1>
+</div>
+<svg id="map"></svg>
+
+<div id="tooltip">/div>
+<div id="container"></div>
+
+
+<script>
+
+
+var pos = 0;
+var svg = d3.select("svg").
+attr("preserveAspectRatio", "xMidYMid meet")
+            .attr("viewBox", "-300 0 1600 1200"),
+    margin = {right: 50, left: 50},
+    width = +svg.attr("width")+400 ,
+    height = +svg.attr("height") + 512;
+
+
+var proj = "laea",
+			nutsLvl = 0;
+			size = 1200;
+	var co2 = d3.map();
+
+	var color = d3.scaleThreshold()
+    .domain(d3.range(1,10))
+    .range(d3.schemeYlGn[9]);
+
+svg.append("rect").attr("id","bck").attr("x",0).attr("y",0).attr("width", width).attr("height", height);
+
+	var g = svg.append("g")
+    .attr("class", "key")
+    .attr("transform", "translate(20,60)");
+    var x = d3.scaleLinear()
+            .domain([1, 9])
+            .rangeRound([500, 800]);
+
+g.selectAll("rect")
+  .data(color.range().map(function(d) {
+      d = color.invertExtent(d);
+      if (d[0] == null) d[0] = x.domain()[0];
+      if (d[1] == null) d[1] = x.domain()[1];
+      return d;
+    }))
+  .enter().append("rect")
+    .attr("height", 8)
+    .attr("x", function(d) { return x(d[0]); })
+    .attr("width", function(d) { return x(d[1]) - x(d[0]); })
+    .attr("fill", function(d) { return color(d[0]); });
+
+g.append("text")
+    .attr("class", "caption")
+    .attr("x", x.range()[0])
+    .attr("y", -6)
+    .attr("fill", "#000")
+    .attr("text-anchor", "start")
+    .attr("font-weight", "bold")
+    .text("CO2 Emissions rate");
+
+g.call(d3.axisBottom(x)
+    .tickSize(13)
+    .tickFormat(function(x, i) { return i ? x*3 : x + "%"; })
+    .tickValues(color.domain()))
+  .select(".domain")
+    .remove();
+	//drawing group
+	var g = svg.append("g").attr("transform","translate(0,0)");
+
+	//zoom
+
+
+	//tooltip element
+	var tooltip = EstLib.tooltip();
+
+
+	var path = d3.geoPath().projection(null);
+
+
+
+
+var x = d3.scaleLinear()
+    .domain([1990, 2012])
+    .range([0, 300])
+    .clamp(true);
+
+var slider = svg.append("g")
+    .attr("class", "slider")
+    .attr("transform", "translate(20,60)");
+
+slider.append("line")
+    .attr("class", "track")
+    .attr("x1", x.range()[0])
+    .attr("x2", x.range()[1])
+  .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+    .attr("class", "track-inset")
+  .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+    .attr("class", "track-overlay")
+    .call(d3.drag()
+        .on("start.interrupt", function() { slider.interrupt(); })
+        .on("start drag", function() {
+          //console.log(d3.event.x);
+          draw(x.invert(d3.event.x))}))
+
+
+
+slider.insert("g", ".track-overlay")
+    .attr("class", "ticks")
+    .attr("transform", "translate(0," + 18 + ")")
+  .selectAll("text")
+  .data(x.ticks(20))
+  .enter().append("text")
+    .attr("x", x)
+    .attr("text-anchor", "middle")
+    .text(function(d) {
+      if(d%5==0)
+      return d;
+      else return "";
+
+        })
+    ;
+
+
+var handle = slider.insert("circle", ".track-overlay")
+    .attr("class", "handle")
+    .attr("r", 9)
+    .attr("fill","black");
+
+slider.transition()
+    .duration(750)// Gratuitous intro
+    .tween("draw", function(t) {
+
+    return draw(t);
+    });
+
+
+
+//var zoom;
+//  svg.call(zoom=d3.zoom().scaleExtent([0.5,0.5]).on("zoom", function() {
+//    var k = d3.event.transform.k;
+//    d3.selectAll(".bn_0").style("stroke-width", (1.5/k)+"px");
+//    d3.selectAll(".bn_1").style("stroke-width", (1/k)+"px");
+//    d3.selectAll(".bn_2").style("stroke-width", (1/k)+"px");
+//    d3.selectAll(".bn_3").style("stroke-width", (0.5/k)+"px");
+//    d3.selectAll(".bn_oth").style("stroke-width", (1/k)+"px");
+//    g.attr("transform", d3.event.transform);
+		//g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+//  }));
+
+
+function draw(t){
+  if(t==null){
+    t=1990;
+  }
+	//get data
+	 handle.attr("cx", x(t));
+	var d=Math.ceil(t);
+	var w=d;
+	//console.log(d);
+	d3.queue()
+    .defer(d3.json, "NUTS_lvl0.json")
+    .defer(d3.tsv, "tsdgp410.tsv", function(d) {
+      if(w!=NaN)
+      {co2.set(d.geo, +d[w]/2);}
+    // else  co2.set(d.geo, +d[1990]);
+     // console.log(w);
+                 })
+    .await(ready);}
+
+	function ready(error, nuts) {
+		if (error) return console.error(error);
+		//console.log(t);
+		//center
+		//zoom.scaleBy(g, 0.8);
+
+
+
+
+
+		//country
+		g.append("g").selectAll("path").data(topojson.feature(nuts, nuts.objects.cntrg).features).enter()
+				.append("path").attr("d", path)
+
+				.attr("class", "cntrg")
+
+				.on("mouseover", function(rg) { tooltip.mouseover("<b>"+rg.properties.cna+"</b><br>"+rg.properties.cid); })
+				.on("mousemove", function() { tooltip.mousemove(); })
+				.on("mouseout", function() { tooltip.mouseout(); });
+
+
+				//console.log(topojson.feature(nuts, nuts.objects.nutsrg).features);
+		g.append("g").selectAll("path").data(topojson.feature(nuts, nuts.objects.cntbn).features).enter()
+				.append("path").attr("d", path)
+				.attr("class", "cntbn")
+        .attr("fill", function(d) {
+                 //console.log(d);
+          if(co2.get(d.id)!=null)
+         return color(d[1990] = co2.get(d.id));
+         else return "lightgray";
+      }) ;
+
+		//nuts regions
+	    g.append("g").selectAll("path").data(topojson.feature(nuts, nuts.objects.nutsrg).features).enter()
+				.append("path")
+        .attr("d", path)
+
+				.attr("fill", function(d) {
+                 //console.log(d);
+          if(co2.get(d.id)!=null)
+				 return color(d[1990] = co2.get(d.id));
+				 else return "lightgray";
+			})
+        .on("click", function(d, i) {
+
+                   // console.log(d);
+                line(d);
+                   // d3.select(this)
+                     //   .attr("fill", "black");
+                })
+        .on("mouseover", function(d, i) {
+          // console.log(d);
+          tooltip.mouseover("<b>"+d.id+"</br><br>"+d.properties.na+"</br><br>"+d[1990]+"%"); })
+        .on("mousemove", function() { tooltip.mousemove(); })
+        .on("mouseout", function() { tooltip.mouseout(); });
+;
+
+	};
+
+
+
+function line(id){
+//console.log(id);
+var width=1000,height=700,
+margin={left:50,top:30,right:20,bottom:20},
+g_width=width-margin.left-margin.right,
+g_height=height-margin.top-margin.bottom;
+
+//div--svg--g--path--xyÖá
+//SVG
+var g1=d3.select("svg")
+.append("g")
+//width,height
+.attr("width",1000) //attribute .Á¬½ÓÃ¿¸öÔªËØ
+.attr("height",500)
+.attr("transform","translate(100,200)");
+g1.append("rect")
+    .attr("width", 1000)
+    .attr("height", 700)
+    .attr("fill", "white");
+
+//g
+var line=g1
+.append("g")
+.attr("transform","translate("+margin.left+","+margin.top+")")
+
+
+d3.tsv("tsdgp4101.tsv",function(data){
+  var year = [];
+  var AT = [];
+  var BE = [];
+  var BG = [];
+  var CH = [];
+  var CY = [];
+  var CZ = [];
+  var DE = [];
+  var DK = [];
+  var EE = [];
+  var EL = [];
+  var ES = [];
+  var EU27 = [];
+  var EU28 = [];
+  var FI = [];
+  var FR = [];
+  var HR = [];
+  var HU = [];
+  var IE = [];
+  var IS = [];
+  var IT = [];
+  var LT = [];
+  var LU = [];
+  var LV = [];
+  var MT = [];
+  var NL = [];
+  var NO = [];
+  var ODA = [];
+  var PL = [];
+  var PT = [];
+  var RO = [];
+  var SE = [];
+  var SI = [];
+  var SK = [];
+  var TR = [];
+  var UK = [];
+
+  var hightlight=[];
+
+
+ data.forEach(function(d) {
+   year.push(d.geo);
+   AT.push(d.AT);
+   BE.push(d.BE);
+   BG.push(d.BG);
+   CH.push(d.CH);
+   CY.push(d.CY);
+   CZ.push(d.CZ);
+   DE.push(d.DE);
+   DK.push(d.DK);
+   EE.push(d.EE);
+   EL.push(d.EL);
+   ES.push(d.ES);
+   EU27.push(d.EU27);
+   EU28.push(d.EU28);
+   FI.push(d.FI);
+   FR.push(d.FR);
+   HR.push(d.HR);
+   HU.push(d.HU);
+   IE.push(d.IE);
+   IS.push(d.IS);
+   IT.push(d.IT);
+   LT.push(d.LT);
+   LU.push(d.LU);
+   LV.push(d.LV);
+   MT.push(d.MT);
+   NL.push(d.NL);
+   NO.push(d.NO);
+   ODA.push(d.ODA);
+   PL.push(d.PL);
+   PT.push(d.PT);
+   RO.push(d.RO);
+   SE.push(d.SE);
+   SI.push(d.SI);
+   SK.push(d.SK);
+   TR.push(d.TR);
+   UK.push(d.UK);
+  // console.log(d);
+ });
+
+
+
+//xÖáËõ·Å
+var scale_x=d3.scaleLinear()
+.domain([0,AT.length-1])
+.range([0,g_width])
+
+var scale_x1=d3.scaleLinear()
+.domain([1990,2012])
+.range([0,g_width])
+
+
+var scale_y=d3.scaleLinear()
+.domain([0,d3.max(LU)])
+.range([g_height,0])
+
+
+var line_generator=d3.line()
+.x(function(d,i){return scale_x(i);})//0,1,2,3...
+.y(function(d){return scale_y(d);})//1,3,5...
+
+cx=function(d,i) { return scale_x(i);},
+  cy=function(d) { return scale_y(d);}
+
+var color = d3.scaleOrdinal(d3.schemeCategory10);
+var country = [AT,BE,BG,CH,CY,CZ,DE,DK,EE,EL,ES,EU27,EU28,FI,FR,HR,HU,IE,IS,IT,LT,LU,LV,MT,NL,NO,ODA,PL,PT,RO,SE,SI,SK,TR,UK];
+var country_name = ["AT","BE","BG","CH","CY","CZ","DE","DK","EE","EL","ES","EU27","EU28","FI","FR","HR","HU","IE","IS","IT","LT","LU","LV","MT","NL","NO","ODA","PL","PT","RO","SE","SI","SK","TR","UK"];
+for(i=0;i<country_name.length;i++){
+  if(id.id==country_name[i]){
+    //console.log(id);
+     data.forEach(function(d) {
+       hightlight.push(d[id.id]);
+
+     });
+  //console.log(hightlight);
+  }
+
+}
+
+
+for(i=0;i<country.length;i++)
+{
+  line
+  .append("path")
+  .attr("d",line_generator(country[i]))
+  .attr("stroke",color(i))//d="M1,0L20,40L40,50L100,100L0,200",d -path data
+  .style("fill","none")
+  .style("opacity", 0.2);
+
+  //console.log(country[i]);
+}
+
+line
+  .append("path")
+  .attr("d",line_generator(hightlight))
+  .attr("stroke","red")//d="M1,0L20,40L40,50L100,100L0,200",d -path data
+  .style("fill","none")
+   .attr("stroke-width",1.5)
+  .on("mouseover", function() {
+          console.log(id);
+          tooltip.mouseover("<b>"+id.id+"</br><br>"+id.properties.na+"</br><br>"); })
+        .on("mousemove", function() { tooltip.mousemove("<b>"+id.id+"</br><br>"+id.properties.na+"</br><br>"); })
+        .on("mouseout", function() { tooltip.mouseout(); });
+;
+//for(i=0;i<country.length-1;i++)
+//{
+//g.selectAll(year[i])
+    //.data(country[i])
+    //.enter().append("circle")
+    //.attr("r",5)
+    //.attr("cx", cx)
+    //.attr("cy", cy)
+    //.style("fill", color(i))
+    //.style("opacity", 0.5);
+//}
+
+line.append("text")
+.attr("transform","translate(450,50)")
+.text(function(){
+  return id.properties.na;
+})
+.style("text-anchor", "middle")
+ .attr("stroke-width",1.5)
+
+
+var x_axis=d3.axisBottom(scale_x1),
+y_axis=d3.axisLeft(scale_y);
+
+
+line.append("g")
+  .call(x_axis)
+  .attr("transform","translate(0,"+g_height+")")
+  .append("text")
+  .attr("x", g_width-20)
+  .attr("y", -6)
+  .style("text-anchor", "end")
+  .text("Year")
+  .attr("dy","-1em");
+
+line.append("g")
+.call(y_axis)
+.append("text")
+.text("Number")
+.attr("transform","rotate(-90)")
+.attr("text-anchor","end")
+.attr("dy","1em")
+
+var he = 0;
+/*
+for(i=0;i<country.length-1;i++)
+{
+  g.append("rect")
+    .attr("x", g_width - 20)
+    .attr("y",g_height - 50 - he)
+    .attr("width", 20)
+    .attr("height", 5)
+    .style("fill",color(i));
+  g.append("text")
+    .attr("x", g_width - 24)
+    .attr("y",g_height -45 - he)
+    .attr("dy", ".35em")
+    .style("text-anchor", "end")
+    .text(country_name[i])
+    he = he + 10;
+}*/
+circie=line.append("circle")
+
+                .attr("cx", 865)
+                .attr("cy", 35)
+                .attr("r", 30)
+                .attr("fill","white")
+                .attr("stroke","black")
+                .attr("stroke-width",1.5)
+                 .on("click", function(d, i) {
+
+                   // console.log(d);
+                   g1.remove();
+
+                })
+
+ cross = line.append("g");
+ cross.append("line")
+
+                .attr("x1", 850)
+                .attr("y1", 50)
+                .attr("x2", 880)
+                .attr("y2", 20)
+                .attr("stroke","black")
+                .attr("stroke-width",1.5)
+                .on("click", function(d, i) {
+
+                   // console.log(d);
+                   g1.remove();
+
+                });
+
+            cross.append("line")
+                .attr("x1", 880)
+                .attr("y1", 50)
+                .attr("x2", 850)
+                .attr("y2", 20)
+                .attr("stroke","black")
+                .attr("stroke-width",1.5)
+                .on("click", function(d, i) {
+
+                   // console.log(d);
+                   g1.remove();
+
+                });
+  });
+
+
+}
+
+
+</script>
+</body>
+=======
+	<head>
+		<title>European Greenhouse Gas Emission</title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<meta name="description" content="" />
+		<meta name="keywords" content="" />
+		<link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,300italic" rel="stylesheet" type="text/css" />
+		<!--[if lte IE 8]><script src="css/ie/html5shiv.js"></script><![endif]-->
+		<script src="js/jquery.min.js"></script>
+		<script src="js/jquery.poptrox.min.js"></script>
+		<script src="js/skel.min.js"></script>
+		<script src="js/init.js"></script>
+        <script src="js/libs/isotope.pkgd.min.js"></script><script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+		 <script src="https://d3js.org/d3.v3.js"></script>
+   		<script src="https://d3js.org/d3-queue.v3.min.js"></script>
+   		<script src="https://d3js.org/d3-color.v1.min.js"></script>
+		<script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
+		<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+	<script src="https://d3js.org/topojson.v1.min.js"></script>
+	<script src="https://rawgit.com/jgaffuri/EurostatVisu/gh-pages/js/lib.js"></script>
+		<noscript>
+			<link rel="stylesheet" href="css/skel-noscript.css" />
+			<link rel="stylesheet" href="css/style.css" />
+		</noscript>
+		<!--[if lte IE 8]><link rel="stylesheet" href="css/ie/v8.css" /><![endif]-->
+	</head>
+	<body>
+
+		<!-- Header -->
+			<section id="header">
+				<header>
+					<h1>European Greenhouse Gas Emission</h1>
+					<p>By Liang Zhang, Zhenyu Hu, Zhe Lyu</p>
+				</header>
+				<footer>
+					<a href="#banner" class="button style2 scrolly scrolly-centered">Weclome</a>
+				</footer>
+			</section>
+		
+		<!-- Banner -->
+			<section id="banner">
+				<header>
+					<h2>Overview</h2>
+				</header>
+				<p>The European Union Emissions Trading System (EU ETS), also known as the European Union Emissions Trading Scheme, <br>was the first large greenhouse gas emissions trading scheme in the world, and remains the biggest.<br> It was launched in 2005 to fight Global warming and is a major pillar of EU climate policy. As of 2013, the EU ETS covers more than 11,000 factories, <br>power stations, and other installations with a net heat excess of 20 MW in 31 countries—all 28 EU member states plus Iceland, <br> Norway, and Liechtenstein. The installations regulated by the EU ETS are collectively responsible in 2008 for close to half of the<br> EU's anthropogenic emissions of CO2 and 40% of its total greenhouse gas emissions.
+	            The EU emissions trading system (EU ETS)<br> is a cornerstone of the EU's policy to combat climate change and its key tool for reducing greenhouse gas emissions cost-effectively. <br>It is the world's first major carbon market and remains the biggest one.</p>
+              <li> <a href="https://youtu.be/WgaDvi5nen8">Watch the tutorial to learn more.</a></li>
+				<footer>
+					<a href="#first" class="button style2 scrolly">Start</a>
+				</footer>
+			</section>
+		    
+		<!-- Feature 1 -->
+			<article id="first" class="container box style2">	
+				<header>
+			    <h2> CO2 Emission Changes in EU </h2>	
+				</header>
+				<h4>According to from 1990 to 2012, we can see changes in carbon dioxide emissions in Europe overall downward trend, especially in the downward trend in developed countries, France, Britain and Germany on behalf of the very obvious, which may have a great relationship with their industrial transformation At the same time, we found that some industries are not developed countries such as Spain, carbon dioxide emissions without significant changes too. There are also countries in which carbon dioxide emissions are on the rise, especially in less developed regions such as Eastern Europe. This may be related to the industrial development of these countries</h4>
+				<svg width="1000" height="800" style="White"></svg>
+            <svg id="map"></svg>
+           <div id="tooltip"></div>	
+                 <script src="coffee/map.js"></script>
+  
+  </article>
+
+
+
+<article class="container box style2 ">
+				<header>
+			    <h2> EU Countries CO2 Emission Trends</h2>	
+				</header>
+				<p><br><br><br></p>
+ <script src="js/libs/coffee-script.js"></script>
+  <script src="js/libs/isotope.pkgd.min.js"></script>
+ 
+  <script src="js/libs/queue.min.js"></script>
+  <script  src="coffee/small_multiples.js"></script>
+
+
+
+ <div class="container">
+
+     <div id="main">
+        <div id="button-wrap">
+        <div id="count" class="button active">COUNT</div>
+        <div id="name" class="button">NAME</div>
+      </div>
+      
+      <div id="vis"></div>
+    </div>
+  </div> <!--! end of #container -->
+  </div> <!--! end of #container -->
+			</article>
+
+	<article class="container box style2 ">
+        	<header>
+			    <h2> Analyze And Predict</h2>	
+				</header>
+				<h4>Our works shows that there was a general downward trend to CO2 emissions from 1990–2012 period . From 1999 to 2006 the evolution of greenhouse gas emissions within the EU-28 remained relatively unchanged, although it started falling at a modest pace through to 2008. The year 2009 saw a sharp drop in emissions as a consequence of the global financial and economic crisis and the resulting reduced industrial activity. Emissions increased in 2010 and decreased again from 2011. Incidentally, 2012 marked the year with the lowest emissions on record since the beginning of the time series.</br></br>
+               For 2020, the EU has committed to cutting its emissions to 20 % below 1990 levels. According to the changing trend, we believe that the EU countries can achieve the overall goal, but there are still individual countries difficult to complete it.
+				</h4>
+		<!-- Feature 2 -->
+	
+		<script  src="coffee/scatter.js"></script>
+
+		</article>>	
+ 
+ 			
+		<section id="footer">
+			<ul class="menu">
+			    <header> 
+			    <h2> Reference</h2>	
+				</header>
+				<div>Dataset:http://ec.europa.eu/eurostat/web/products-datasets/-/tsdgp410</div>
+				<div>Drag Slider:https://bl.ocks.org/mbostock/645297</div>
+				<div>Map: https://gist.github.com/milafrerichs/69035da4707ea51886eb</div>
+				<div>Small Multiple: http://flowingdata.com/2014/10/15/linked-small-multiples</div>
+				<div>Data Analysis:http://ec.europa.eu/eurostat/statistics-explained/index.php/Greenhouse_gas_emission_statistics</div>
+				<div>Web Design: https://html5up.net/overflow</div>
+			</ul>
+			<div class="copyright">
+				<ul class="menu">
+					<li><a href="https://github.com/ZheLyu/DataVisFinal">Github:https://github.com/ZheLyu/DataVisFinal</a></li>
+					<li>Data Visualization Final Project</a></li>
+				</ul>
+			</div>
+		</section>
+      
+	</body>
+</html>
+>>>>>>> 0ad89256b1b3b2ed9393f6aa552f736b6d11b14d
